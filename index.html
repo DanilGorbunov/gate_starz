@@ -414,6 +414,10 @@ const INITIAL_CARS = [
   { plate: 'BT611CZ', cat: 'BKIS' },
   { plate: 'AB608EK', cat: 'BKIS' },
   { plate: 'BL584HU', cat: 'BKIS' },
+  { plate: '261PU',   cat: 'BKIS' },
+  { plate: '231IB',   cat: 'BKIS' },
+  { plate: '766RP',   cat: 'BKIS' },
+  { plate: '742CS',   cat: 'BKIS' },
   // Double Agency
   { plate: 'NM640CZ', cat: 'DOUBLE AGENCY' },
   // Luki Turiak
@@ -478,11 +482,16 @@ function loadData() {
   const saved = localStorage.getItem('gate_cars_v2');
   if (saved) {
     cars = JSON.parse(saved);
+    const savedPlates = new Set(cars.map(c => c.plate));
+    const newEntries = INITIAL_CARS
+      .filter(c => !savedPlates.has(c.plate.toUpperCase().replace(/\s/g, '')))
+      .map(c => ({ ...c, plate: c.plate.toUpperCase().replace(/\s/g, ''), status: 'none', log: [] }));
+    if (newEntries.length) { cars = cars.concat(newEntries); saveData(); }
   } else {
     cars = INITIAL_CARS.map(c => ({
       ...c,
       plate: c.plate.toUpperCase().replace(/\s/g, ''),
-      status: 'none', // none | inside | outside
+      status: 'none',
       log: []
     }));
     saveData();
