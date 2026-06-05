@@ -8,6 +8,18 @@
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Unbounded:wght@400;700&display=swap');
 
   :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --border: #d0dae6;
+    --accent: #0077bb;
+    --green: #00994d;
+    --red: #cc2244;
+    --yellow: #b87800;
+    --text: #1a2332;
+    --muted: #6b82a0;
+  }
+
+  [data-theme="dark"] {
     --bg: #0a0e14;
     --surface: #131920;
     --border: #1e2d3d;
@@ -340,11 +352,39 @@
   }
 
   .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* THEME TOGGLE */
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+
+  .theme-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
 
-<h1>🚧 Kontrola vjazdu</h1>
+<div class="header-row">
+  <h1>🚧 Kontrola vjazdu</h1>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 Tmavá</button>
+</div>
 <div class="subtitle">Zlaté Piesky · 5.6.2026 · BKIS</div>
 
 <!-- SEARCH -->
@@ -654,7 +694,20 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ===== THEME =====
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+  document.getElementById('themeBtn').textContent = dark ? '☀️ Svetlá' : '🌙 Tmavá';
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  applyTheme(!isDark);
+}
+
 // ===== INIT =====
+applyTheme(localStorage.getItem('theme') === 'dark');
 loadData();
 renderList();
 </script>
