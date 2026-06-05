@@ -459,11 +459,11 @@ const INITIAL_CARS = [
   { plate: '766RP',   cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:05:49'}] },
   { plate: '742CS',   cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:20:41'}] },
   // Double Agency
-  { plate: 'NM640CZ', cat: 'DOUBLE AGENCY' },
+  { plate: 'NM640CZ', cat: 'DOUBLE AGENCY', status: 'inside', log: [] },
   // Luki Turiak
   { plate: 'BL786ZA', cat: 'LUKI TURIAK' },
   // ARES
-  { plate: 'BL622OP', cat: 'ARES' },
+  { plate: 'BL622OP', cat: 'ARES', status: 'inside', log: [] },
   // Frisbee
   { plate: 'BL581UH', cat: 'Slovenská asociácia Frisbee' },
   // Ma-Ya Agency
@@ -522,11 +522,20 @@ function loadData() {
   const saved = localStorage.getItem('gate_cars_v3');
   if (saved) {
     cars = JSON.parse(saved);
+    let changed = false;
     const savedPlates = new Set(cars.map(c => c.plate));
     const newEntries = INITIAL_CARS
       .filter(c => !savedPlates.has(c.plate.toUpperCase().replace(/\s/g, '')))
       .map(c => ({ plate: c.plate.toUpperCase().replace(/\s/g, ''), cat: c.cat, status: c.status || 'none', log: c.log || [] }));
-    if (newEntries.length) { cars = cars.concat(newEntries); saveData(); }
+    if (newEntries.length) { cars = cars.concat(newEntries); changed = true; }
+    INITIAL_CARS.forEach(ic => {
+      if (ic.status === 'inside') {
+        const plate = ic.plate.toUpperCase().replace(/\s/g, '');
+        const car = cars.find(c => c.plate === plate);
+        if (car && car.status === 'none') { car.status = 'inside'; car.log = ic.log || []; changed = true; }
+      }
+    });
+    if (changed) saveData();
   } else {
     // migrate from v2, preserve any logged statuses
     const v2raw = localStorage.getItem('gate_cars_v2');
