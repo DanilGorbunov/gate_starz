@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Vstupná brána — Zlaté Piesky</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Unbounded:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #131920;
+    --border: #1e2d3d;
+    --accent: #00d4ff;
+    --green: #00ff88;
+    --red: #ff4466;
+    --yellow: #ffd700;
+    --text: #e8f0ff;
+    --muted: #4a6080;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  /* SEARCH */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  #search {
+    width: 100%;
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    color: var(--accent);
+    outline: none;
+    caret-color: var(--accent);
+  }
+
+  #search::placeholder { color: var(--muted); font-weight: 400; font-size: 14px; letter-spacing: 0.05em; }
+
+  .search-hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    padding-left: 4px;
+  }
+
+  /* RESULT CARD */
+  .result-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-left: 4px solid var(--muted);
+    display: none;
+    animation: slideIn 0.2s ease;
+  }
+
+  .result-card.found { border-left-color: var(--green); display: block; }
+  .result-card.not-found { border-left-color: var(--red); display: block; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-plate {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .result-category {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .status-out { background: rgba(0,255,136,0.15); color: var(--green); border: 1px solid var(--green); }
+  .status-in { background: rgba(255,68,102,0.15); color: var(--red); border: 1px solid var(--red); }
+
+  .log-entry {
+    font-size: 10px;
+    color: var(--muted);
+    padding: 4px 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .log-entry span.in-tag { color: var(--green); }
+  .log-entry span.out-tag { color: var(--red); }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .btn-enter { background: var(--green); color: #000; }
+  .btn-exit { background: var(--red); color: #fff; }
+  .btn:active { transform: scale(0.96); }
+
+  /* ADD NEW */
+  .add-section {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .add-section h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--yellow);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .add-inputs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .add-inputs input, .add-inputs select {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    outline: none;
+    text-transform: uppercase;
+  }
+
+  .add-inputs input:focus, .add-inputs select:focus {
+    border-color: var(--yellow);
+  }
+
+  .add-inputs select option { background: var(--bg); text-transform: uppercase; }
+
+  .btn-add {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 1px solid var(--yellow);
+    border-radius: 6px;
+    color: var(--yellow);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .btn-add:hover { background: rgba(255,215,0,0.1); }
+
+  /* LIST */
+  .list-section { margin-bottom: 16px; }
+
+  .list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .list-header h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .car-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--surface);
+    border-radius: 7px;
+    margin-bottom: 6px;
+    border-left: 3px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .car-row:hover { border-left-color: var(--accent); }
+  .car-row.inside { border-left-color: var(--red); }
+  .car-row.outside { border-left-color: var(--green); }
+
+  .car-plate-small {
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    flex: 1;
+  }
+
+  .car-cat {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 10px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-in { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .dot-out { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-none { background: var(--border); }
+
+  .count-badge {
+    font-size: 10px;
+    background: rgba(0,212,255,0.15);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 20px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<h1>🚧 Kontrola vjazdu</h1>
+<div class="subtitle">Zlaté Piesky · 5.6.2026 · BKIS</div>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <input type="text" id="search" placeholder="Zadaj ŠPZ..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+</div>
+<div class="search-hint">Zadaj časť ŠPZ — nájde automaticky</div>
+
+<!-- RESULT -->
+<div class="result-card" id="resultCard">
+  <div class="result-plate" id="resultPlate"></div>
+  <div class="result-category" id="resultCategory"></div>
+  <div id="resultStatus"></div>
+  <div id="resultLog"></div>
+  <div class="btn-row" id="resultBtns"></div>
+</div>
+
+<!-- ADD NEW -->
+<div class="add-section">
+  <h3>➕ Pridať nové vozidlo</h3>
+  <div class="add-inputs">
+    <input type="text" id="newPlate" placeholder="AA000BB" maxlength="10">
+    <select id="newCat">
+      <option value="BKIS">BKIS</option>
+      <option value="technika">Technika</option>
+      <option value="catering">Catering</option>
+      <option value="multi-sport">Multi-sport</option>
+      <option value="DJ">DJ</option>
+      <option value="selfiekútik">Selfiekútik</option>
+      <option value="Fotograf">Fotograf</option>
+      <option value="iHRYsko.sk">iHRYsko.sk</option>
+      <option value="dračie lode">Dračie lode</option>
+      <option value="Ma-Ya Agency">Ma-Ya Agency</option>
+      <option value="Slovenská asociácia Frisbee">Frisbee</option>
+      <option value="DOUBLE AGENCY">Double Agency</option>
+      <option value="LUKI TURIAK">Luki Turiak</option>
+      <option value="ARES">ARES</option>
+      <option value="mestská polícia">Mestská polícia</option>
+      <option value="iné">Iné</option>
+    </select>
+  </div>
+  <button class="btn-add" onclick="addCar()">Pridať do zoznamu</button>
+</div>
+
+<!-- LIST -->
+<div class="list-section">
+  <div class="list-header">
+    <h3>Všetky vozidlá</h3>
+    <span class="count-badge" id="totalCount">0</span>
+  </div>
+  <div class="filter-tabs">
+    <div class="tab active" onclick="setFilter('all', this)">Všetky</div>
+    <div class="tab" onclick="setFilter('inside', this)">Vnútri</div>
+    <div class="tab" onclick="setFilter('outside', this)">Vonku</div>
+    <div class="tab" onclick="setFilter('none', this)">Ešte neboli</div>
+  </div>
+  <div id="carList"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+const INITIAL_CARS = [
+  // BKIS
+  { plate: 'BT034GY', cat: 'BKIS' },
+  { plate: 'BT611CZ', cat: 'BKIS' },
+  { plate: 'AB608EK', cat: 'BKIS' },
+  { plate: 'BL584HU', cat: 'BKIS' },
+  // Double Agency
+  { plate: 'NM640CZ', cat: 'DOUBLE AGENCY' },
+  // Luki Turiak
+  { plate: 'BL786ZA', cat: 'LUKI TURIAK' },
+  // ARES
+  { plate: 'BL622OP', cat: 'ARES' },
+  // Frisbee
+  { plate: 'BL581UH', cat: 'Slovenská asociácia Frisbee' },
+  // Ma-Ya Agency
+  { plate: 'BL990PL', cat: 'Ma-Ya Agency' },
+  { plate: 'MA932FF', cat: 'Ma-Ya Agency' },
+  { plate: 'PP680DK', cat: 'Ma-Ya Agency' },
+  { plate: 'AA521XM', cat: 'Ma-Ya Agency' },
+  // selfiekútik
+  { plate: 'BT372DE', cat: 'selfiekútik' },
+  // catering
+  { plate: 'BL955VJ', cat: 'catering' },
+  { plate: 'BL996ZK', cat: 'catering' },
+  { plate: 'BT050HA', cat: 'catering' },
+  { plate: 'BL471CA', cat: 'catering' },
+  { plate: 'AB124AN', cat: 'catering' },
+  { plate: 'BL903TS', cat: 'catering' },
+  { plate: 'MI037BL', cat: 'catering' },
+  { plate: 'TO376CA', cat: 'catering' },
+  { plate: 'AA208EY', cat: 'catering' },
+  // technika
+  { plate: 'BA361JE', cat: 'technika' },
+  { plate: 'BA319TG', cat: 'technika' },
+  { plate: 'BA356PO', cat: 'technika' },
+  { plate: 'BL449LO', cat: 'technika' },
+  { plate: 'BL080HR', cat: 'technika' },
+  { plate: 'AA330AU', cat: 'technika' },
+  { plate: 'KN499GJ', cat: 'technika' },
+  { plate: 'BA264NL', cat: 'technika' },
+  { plate: 'BA954NL', cat: 'technika' },
+  { plate: 'AB559FN', cat: 'technika' },
+  { plate: 'BL624AG', cat: 'technika' },
+  { plate: 'SC125GU', cat: 'technika' },
+  // Fotograf
+  { plate: 'BL126PR', cat: 'Fotograf' },
+  // iHRYsko
+  { plate: 'BT067DV', cat: 'iHRYsko.sk' },
+  // dračie lode
+  { plate: 'TN001', cat: 'dračie lode' },
+  { plate: 'TN146HI', cat: 'dračie lode' },
+  { plate: 'TN625DH', cat: 'dračie lode' },
+  // SBS
+  { plate: '037LB', cat: 'SBS' },
+  { plate: '102IN', cat: 'SBS' },
+  // multi-sport
+  { plate: 'BT386HD', cat: 'multi-sport' },
+  { plate: 'MA695DT', cat: 'multi-sport' },
+  { plate: 'AB638EC', cat: 'multi-sport' },
+  // DJ
+  { plate: 'GA774FS', cat: 'DJ' },
+];
+
+let cars = [];
+let currentFilter = 'all';
+
+function loadData() {
+  const saved = localStorage.getItem('gate_cars_v2');
+  if (saved) {
+    cars = JSON.parse(saved);
+  } else {
+    cars = INITIAL_CARS.map(c => ({
+      ...c,
+      plate: c.plate.toUpperCase().replace(/\s/g, ''),
+      status: 'none', // none | inside | outside
+      log: []
+    }));
+    saveData();
+  }
+}
+
+function saveData() {
+  localStorage.setItem('gate_cars_v2', JSON.stringify(cars));
+}
+
+function now() {
+  return new Date().toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+// ===== SEARCH =====
+let lastQuery = '';
+
+document.getElementById('search').addEventListener('input', function() {
+  const q = this.value.toUpperCase().replace(/\s/g, '');
+  lastQuery = q;
+  if (!q) {
+    document.getElementById('resultCard').className = 'result-card';
+    renderList();
+    return;
+  }
+  const match = cars.find(c => c.plate === q) || cars.find(c => c.plate.includes(q));
+  showResult(match, q);
+  renderList();
+});
+
+function showResult(car, query) {
+  const card = document.getElementById('resultCard');
+  if (!car) {
+    card.className = 'result-card not-found';
+    document.getElementById('resultPlate').textContent = query;
+    document.getElementById('resultCategory').textContent = 'Nenájdené v zozname';
+    document.getElementById('resultStatus').innerHTML = '';
+    document.getElementById('resultLog').innerHTML = '';
+    document.getElementById('resultBtns').innerHTML = `
+      <button class="btn btn-enter" style="background:#666;color:#999;cursor:default">Nie je v zozname</button>
+    `;
+    return;
+  }
+
+  card.className = 'result-card found';
+  document.getElementById('resultPlate').textContent = car.plate;
+  document.getElementById('resultCategory').textContent = car.cat;
+
+  let statusHTML = '';
+  if (car.status === 'inside') {
+    statusHTML = '<span class="status-badge status-in">🔴 Vnútri areálu</span>';
+  } else if (car.status === 'outside') {
+    statusHTML = '<span class="status-badge status-out">🟢 Vonku / Odišlo</span>';
+  } else {
+    statusHTML = '<span class="status-badge" style="background:rgba(74,96,128,0.2);color:#4a6080;border:1px solid #4a6080">⚪ Ešte sa neobjavilo</span>';
+  }
+  document.getElementById('resultStatus').innerHTML = statusHTML;
+
+  // Log
+  let logHTML = '';
+  if (car.log && car.log.length > 0) {
+    logHTML = car.log.slice(-5).reverse().map(e =>
+      `<div class="log-entry">
+        <span class="${e.type === 'in' ? 'in-tag' : 'out-tag'}">${e.type === 'in' ? '▶ Vjazd' : '◀ Výjazd'}</span>
+        <span>${e.time}</span>
+      </div>`
+    ).join('');
+  }
+  document.getElementById('resultLog').innerHTML = logHTML;
+
+  const idx = cars.indexOf(car);
+  document.getElementById('resultBtns').innerHTML = `
+    <button class="btn btn-enter" onclick="logEvent(${idx},'in')">&#9654; Vjazd</button>
+    <button class="btn btn-exit" onclick="logEvent(${idx},'out')">&#9664; V&#253;jazd</button>
+  `;
+}
+
+function logEvent(idx, type) {
+  const car = cars[idx];
+  if (!car.log) car.log = [];
+  const entry = { type, time: now() };
+  car.log.push(entry);
+  car.status = type === 'in' ? 'inside' : 'outside';
+  saveData();
+  showResult(car, car.plate);
+  renderList();
+  showToast(type === 'in' ? `✅ ${car.plate} — vjazd o ${entry.time}` : `🚪 ${car.plate} — výjazd o ${entry.time}`);
+}
+
+// ===== ADD CAR =====
+function addCar() {
+  const plateInput = document.getElementById('newPlate');
+  const cat = document.getElementById('newCat').value;
+  const plate = plateInput.value.toUpperCase().replace(/\s/g, '');
+  if (!plate) { showToast('⚠️ Zadaj ŠPZ!'); return; }
+  if (cars.find(c => c.plate === plate)) { showToast('⚠️ Už je v zozname!'); return; }
+  cars.push({ plate, cat, status: 'none', log: [] });
+  saveData();
+  plateInput.value = '';
+  renderList();
+  showToast(`➕ ${plate} (${cat}) pridané`);
+}
+
+// ===== FILTER =====
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+// ===== RENDER LIST =====
+function renderList() {
+  const q = lastQuery;
+  let filtered = cars;
+
+  if (q) {
+    filtered = cars.filter(c => c.plate.includes(q));
+  } else if (currentFilter !== 'all') {
+    filtered = cars.filter(c => c.status === currentFilter || (currentFilter === 'none' && c.status === 'none'));
+  }
+
+  document.getElementById('totalCount').textContent = filtered.length;
+
+  const container = document.getElementById('carList');
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty-msg">Nič sa nenašlo</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map((car, _) => {
+    const idx = cars.indexOf(car);
+    const dotClass = car.status === 'inside' ? 'dot-in' : car.status === 'outside' ? 'dot-out' : 'dot-none';
+    const rowClass = car.status === 'inside' ? 'inside' : car.status === 'outside' ? 'outside' : '';
+    const lastEntry = car.log && car.log.length ? car.log[car.log.length-1] : null;
+    const lastTime = lastEntry ? ` · ${lastEntry.time}` : '';
+    return `<div class="car-row ${rowClass}" onclick="quickLog(${idx})">
+      <div class="car-plate-small">${car.plate}</div>
+      <div class="car-cat">${car.cat}${lastTime}</div>
+      <div class="dot ${dotClass}"></div>
+    </div>`;
+  }).join('');
+}
+
+function quickLog(idx) {
+  document.getElementById('search').value = cars[idx].plate;
+  lastQuery = cars[idx].plate;
+  showResult(cars[idx], cars[idx].plate);
+  window.scrollTo(0, 0);
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== INIT =====
+loadData();
+renderList();
+</script>
+</body>
+</html>
