@@ -410,14 +410,14 @@
 // ===== DATA =====
 const INITIAL_CARS = [
   // BKIS
-  { plate: 'BT034GY', cat: 'BKIS' },
+  { plate: 'BT034GY', cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:07:03'}] },
   { plate: 'BT611CZ', cat: 'BKIS' },
-  { plate: 'AB608EK', cat: 'BKIS' },
-  { plate: 'BL584HU', cat: 'BKIS' },
-  { plate: '261PU',   cat: 'BKIS' },
-  { plate: '231IB',   cat: 'BKIS' },
-  { plate: '766RP',   cat: 'BKIS' },
-  { plate: '742CS',   cat: 'BKIS' },
+  { plate: 'AB608EK', cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:17:49'}] },
+  { plate: 'BL584HU', cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:15:45'}] },
+  { plate: '261PU',   cat: 'BKIS', status: 'inside', log: [{type:'in', time:'06:57:51'}] },
+  { plate: '231IB',   cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:02:34'}] },
+  { plate: '766RP',   cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:05:49'}] },
+  { plate: '742CS',   cat: 'BKIS', status: 'inside', log: [{type:'in', time:'07:20:41'}] },
   // Double Agency
   { plate: 'NM640CZ', cat: 'DOUBLE AGENCY' },
   // Luki Turiak
@@ -429,7 +429,7 @@ const INITIAL_CARS = [
   // Ma-Ya Agency
   { plate: 'BL990PL', cat: 'Ma-Ya Agency' },
   { plate: 'MA932FF', cat: 'Ma-Ya Agency' },
-  { plate: 'PP680DK', cat: 'Ma-Ya Agency' },
+  { plate: 'PP680DK', cat: 'Ma-Ya Agency', status: 'inside', log: [{type:'in', time:'06:46:06'}] },
   { plate: 'AA521XM', cat: 'Ma-Ya Agency' },
   // selfiekútik
   { plate: 'BT372DE', cat: 'selfiekútik' },
@@ -437,16 +437,16 @@ const INITIAL_CARS = [
   { plate: 'BL955VJ', cat: 'catering' },
   { plate: 'BL996ZK', cat: 'catering' },
   { plate: 'BT050HA', cat: 'catering' },
-  { plate: 'BL471CA', cat: 'catering' },
+  { plate: 'BL471CA', cat: 'catering', status: 'inside', log: [{type:'in', time:'07:21:07'}] },
   { plate: 'AB124AN', cat: 'catering' },
-  { plate: 'BL903TS', cat: 'catering' },
-  { plate: 'MI037BL', cat: 'catering' },
+  { plate: 'BL903TS', cat: 'catering', status: 'inside', log: [{type:'in', time:'06:59:01'}] },
+  { plate: 'MI037BL', cat: 'catering', status: 'inside', log: [{type:'in', time:'06:43:51'}] },
   { plate: 'TO376CA', cat: 'catering' },
-  { plate: 'AA208EY', cat: 'catering' },
+  { plate: 'AA208EY', cat: 'catering', status: 'inside', log: [{type:'in', time:'06:49:35'}] },
   // technika
   { plate: 'BA361JE', cat: 'technika' },
   { plate: 'BA319TG', cat: 'technika' },
-  { plate: 'BA356PO', cat: 'technika' },
+  { plate: 'BA356PO', cat: 'technika', status: 'inside', log: [{type:'in', time:'06:59:35'}] },
   { plate: 'BL449LO', cat: 'technika' },
   { plate: 'BL080HR', cat: 'technika' },
   { plate: 'AA330AU', cat: 'technika' },
@@ -455,51 +455,54 @@ const INITIAL_CARS = [
   { plate: 'BA954NL', cat: 'technika' },
   { plate: 'AB559FN', cat: 'technika' },
   { plate: 'BL624AG', cat: 'technika' },
-  { plate: 'SC125GU', cat: 'technika' },
+  { plate: 'SC125GU', cat: 'technika', status: 'inside', log: [{type:'in', time:'06:59:46'}] },
   // Fotograf
   { plate: 'BL126PR', cat: 'Fotograf' },
   // iHRYsko
   { plate: 'BT067DV', cat: 'iHRYsko.sk' },
   // dračie lode
-  { plate: 'TN001', cat: 'dračie lode' },
+  { plate: 'TN001',   cat: 'dračie lode' },
   { plate: 'TN146HI', cat: 'dračie lode' },
   { plate: 'TN625DH', cat: 'dračie lode' },
   // SBS
-  { plate: '037LB', cat: 'SBS' },
+  { plate: '037LB', cat: 'SBS', status: 'inside', log: [{type:'in', time:'06:45:03'}] },
   { plate: '102IN', cat: 'SBS' },
   // multi-sport
   { plate: 'BT386HD', cat: 'multi-sport' },
   { plate: 'MA695DT', cat: 'multi-sport' },
   { plate: 'AB638EC', cat: 'multi-sport' },
   // DJ
-  { plate: 'GA774FS', cat: 'DJ' },
+  { plate: 'GA774FS', cat: 'DJ', status: 'inside', log: [{type:'in', time:'06:58:40'}] },
 ];
 
 let cars = [];
 let currentFilter = 'all';
 
 function loadData() {
-  const saved = localStorage.getItem('gate_cars_v2');
+  const saved = localStorage.getItem('gate_cars_v3');
   if (saved) {
     cars = JSON.parse(saved);
     const savedPlates = new Set(cars.map(c => c.plate));
     const newEntries = INITIAL_CARS
       .filter(c => !savedPlates.has(c.plate.toUpperCase().replace(/\s/g, '')))
-      .map(c => ({ ...c, plate: c.plate.toUpperCase().replace(/\s/g, ''), status: 'none', log: [] }));
+      .map(c => ({ plate: c.plate.toUpperCase().replace(/\s/g, ''), cat: c.cat, status: c.status || 'none', log: c.log || [] }));
     if (newEntries.length) { cars = cars.concat(newEntries); saveData(); }
   } else {
-    cars = INITIAL_CARS.map(c => ({
-      ...c,
-      plate: c.plate.toUpperCase().replace(/\s/g, ''),
-      status: 'none',
-      log: []
-    }));
+    // migrate from v2, preserve any logged statuses
+    const v2raw = localStorage.getItem('gate_cars_v2');
+    const v2 = v2raw ? JSON.parse(v2raw) : null;
+    cars = INITIAL_CARS.map(c => {
+      const plate = c.plate.toUpperCase().replace(/\s/g, '');
+      const prev = v2 && v2.find(x => x.plate === plate);
+      if (prev && prev.status !== 'none') return prev;
+      return { plate, cat: c.cat, status: c.status || 'none', log: c.log || [] };
+    });
     saveData();
   }
 }
 
 function saveData() {
-  localStorage.setItem('gate_cars_v2', JSON.stringify(cars));
+  localStorage.setItem('gate_cars_v3', JSON.stringify(cars));
 }
 
 function now() {
