@@ -1,40 +1,55 @@
 import { useRef, useState } from "react";
+import Tesseract from "tesseract.js";
 
 interface Props {
   onPlate: (plate: string) => void;
   onToast: (msg: string) => void;
 }
 
-// Local OCR service URL — running OpenALPR or EasyOCR on the same network
-// Change this to your Pi/NUC address, e.g. http://192.168.1.50:5000/recognize
-const OCR_URL = import.meta.env.VITE_OCR_URL ?? "http://localhost:5000/recognize";
-
 export default function CameraCapture({ onPlate, onToast }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   async function handleFile(file: File) {
     setLoading(true);
+    setProgress(0);
     try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch(OCR_URL, { method: "POST", body: formData });
-      if (!res.ok) throw new Error("OCR error");
-      const data = await res.json() as { plate?: string; results?: { plate: string }[] };
-      const plate =
-        data.plate ??
-        data.results?.[0]?.plate ??
-        null;
+      const result = await Tesseract.recognize(file, "eng", {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            setProgress(Math.round((m.progress ?? 0) * 100));
+          }
+        },
+      });
+
+      // grab raw text, keep only A-Z and 0-9
+      const raw = result.data.text
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, "")
+        .trim();
+
+      // heuristic: plate is 4–10 chars
+      // split by whitespace first, find the most plate-like chunk
+      const chunks = result.data.text
+        .toUpperCase()
+        .split(/\s+/)
+        .map((c) => c.replace(/[^A-Z0-9]/g, ""))
+        .filter((c) => c.length >= 4 && c.length <= 10);
+
+      const plate = chunks[0] ?? (raw.length >= 4 ? raw.slice(0, 10) : null);
+
       if (plate) {
-        onPlate(plate.toUpperCase().replace(/\s/g, ""));
+        onPlate(plate);
         onToast(`📷 OCR: ${plate}`);
       } else {
-        onToast("📷 Číslo nenájdené");
+        onToast("📷 Číslo sa nepodarilo rozpoznať — skús znova");
       }
     } catch {
-      onToast("⚠️ OCR nedostupné — zadaj ručne");
+      onToast("⚠️ Chyba OCR — skús znova");
     } finally {
       setLoading(false);
+      setProgress(0);
     }
   }
 
@@ -46,14 +61,21 @@ export default function CameraCapture({ onPlate, onToast }: Props) {
         accept="image/*"
         capture="environment"
         style={{ display: "none" }}
-        onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleFile(f);
+          // reset so same file can be re-selected
+          e.target.value = "";
+        }}
       />
       <button
         className="camera-btn"
         onClick={() => inputRef.current?.click()}
         disabled={loading}
       >
-        {loading ? "⏳ Rozpoznávam..." : "📷 Nafotiť ŠPZ (OCR)"}
+        {loading
+          ? `⏳ Rozpoznávam… ${progress > 0 ? progress + "%" : ""}`
+          : "📷 Nafotiť ŠPZ (OCR)"}
       </button>
     </>
   );
